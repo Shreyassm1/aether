@@ -1,1 +1,10 @@
 creds.txt
+
+# This rule ignores files that don't have an extension.
+*
+!*/
+!*.cpp
+!*.h
+!*.hpp
+!*.md
+!*.gitignore
