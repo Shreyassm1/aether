@@ -8,3 +8,5 @@ creds.txt
 !*.hpp
 !*.md
 !*.gitignore
+!*.S
+!*.ld
