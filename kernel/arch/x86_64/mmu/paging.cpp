@@ -1,8 +1,12 @@
 #include "paging.hpp"
 
+extern "C" {
+    alignas(4096) uint64_t bootstrap_pml4[512];
+    alignas(4096) uint64_t bootstrap_pdpt[512];
+    alignas(4096) uint64_t bootstrap_pd[512];
+}
+
 namespace mmu {
-    // Define the tables. In a real OS, these would be dynamically allocated.
-    // For our "Survival Paging", we statically allocate 2MB worth of mapping.
     alignas(4096) uint64_t pml4[512];
     alignas(4096) uint64_t pdpt[512];
     alignas(4096) uint64_t pd[512];

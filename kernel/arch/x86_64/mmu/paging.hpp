@@ -1,6 +1,12 @@
 #pragma once 
 #include <stdint.h>
 
+extern "C" {
+    alignas(4096) extern uint64_t bootstrap_pml4[512];
+    alignas(4096) extern uint64_t bootstrap_pdpt[512];
+    alignas(4096) extern uint64_t bootstrap_pd[512];
+}
+
 namespace mmu {
     enum Flags : uint64_t {
         Present = 1ULL << 0,

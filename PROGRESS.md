@@ -33,3 +33,15 @@ This file contains a concise timeline of repository progress, grouped by date. E
 	- Added simple paging implementation in `kernel/arch/x86_64/mmu/paging.cpp` and header `paging.hpp`.
 	- Statically allocate PML4/PDPT/PD/PT tables and identity-map the first 2 MiB (512 x 4 KiB pages) to support kernel survival when enabling paging.
 	- Provide `init()` to populate page tables and `enable()` to load CR3 and set required CR4/CR0 bits. This is intentionally minimal — a foundation for later physical memory manager and virtual mapping features.
+
+2026-03-28
+- feat: split boot flow into 32-bit and 64-bit kernel targets
+	- Replaced the old single-kernel structure with two explicit boot targets: a primitive 32-bit kernel and a separate long-mode kernel.
+	- Added `boot/boot_long.S`, `boot/linker32.ld`, `boot/linker64.ld`, and a repo-root `Makefile` that builds `kernel32.elf`, `kernel64.elf`, and a bootable ISO.
+	- Updated GRUB to expose both kernel images as separate menu entries so boot mode can be selected without editing source.
+- feat: enter x86_64 long mode and wire runtime MMU handoff
+	- Implemented the real bootstrap transition from 32-bit protected mode into 64-bit long mode in `boot/boot_long.S`.
+	- Added bootstrap page tables for the transition, a temporary 64-bit GDT, and the required `CR4.PAE`, `EFER.LME`, `CR0.PG`, and far-jump sequence.
+	- Wired `kernel_main` to call `mmu::init()` and `mmu::enable()` in the 64-bit build so the runtime MMU mapping becomes active after long mode entry.
+- docs: sync repo status with dual-kernel structure
+	- Updated `docs/kernel_entry.md`, `docs/repo_status.md`, and `docs/README.md` to document the new split boot flow and note that the older `boot/linker.ld` / `kernel.elf` path was replaced.
