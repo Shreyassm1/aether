@@ -18,6 +18,7 @@
   - newline handling
   - screen clearing
   - text scrolling
+  - foreground/background color control
 - Active x86_64 paging implementation in:
   - [paging.hpp](../kernel/arch/x86_64/mmu/paging.hpp)
   - [paging.cpp](../kernel/arch/x86_64/mmu/paging.cpp)
@@ -75,6 +76,7 @@
 - No scheduler/process model yet.
 - No formatted output layer above the VGA console yet.
 - No hardware cursor programming yet.
+- No software-managed per-cell metadata beyond the VGA hardware attribute byte.
 
 ## Recommended Next Documentation Sync Points
 

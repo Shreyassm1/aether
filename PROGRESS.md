@@ -55,3 +55,7 @@ This file contains a concise timeline of repository progress, grouped by date. E
 	- Updated `Makefile` so both `kernel32.elf` and `kernel64.elf` link the new VGA driver object file.
 - docs: explain VGA text mode driver design
 	- Added `docs/vga_console.md` and refreshed `docs/kernel_entry.md`, `docs/repo_status.md`, and `docs/README.md` to document the hardware mapping, static-class design, and current runtime behavior.
+- feat: expose VGA text colors through a simple driver API
+	- Extended `VGA::Console` with an explicit color API so the driver can encode foreground and background colors without using raw magic numbers at call sites.
+	- Kept the kernel demo to one clearly observable colored status line so the visible behavior stays simple and reliable in QEMU.
+	- Simplified the VGA docs to match the observable color-only path now kept in the driver.

@@ -10,6 +10,8 @@ namespace VGA {
 size_t Console::row = 0;
 size_t Console::col = 0;
 uint8_t Console::color = 0x0F;
+Console::Color Console::foreground = Console::Color::White;
+Console::Color Console::background = Console::Color::Black;
 
 // VGA text mode lives at physical memory address 0xB8000.
 // volatile is required because this is memory-mapped I/O, not ordinary RAM from the compiler's perspective.
@@ -21,7 +23,32 @@ volatile uint16_t* const Console::buffer =
 void Console::init() {
     row = 0;
     col = 0;
-    color = 0x0F;
+    foreground = Color::White;
+    background = Color::Black;
+    refreshColor();
+}
+
+// ---------------- ATTRIBUTE ENCODING ----------------
+//
+// VGA text mode gives us exactly one attribute byte:
+// bits 7-4 -> background color
+// bits 3-0 -> foreground color
+
+uint8_t Console::makeColor(Color foregroundColor, Color backgroundColor) {
+    const uint8_t foregroundBits = static_cast<uint8_t>(foregroundColor) & 0x0F;
+    const uint8_t backgroundBits = static_cast<uint8_t>(backgroundColor) & 0x0F;
+
+    return static_cast<uint8_t>(backgroundBits << 4) | foregroundBits;
+}
+
+void Console::refreshColor() {
+    color = makeColor(foreground, background);
+}
+
+void Console::setColor(Color newForeground, Color newBackground) {
+    foreground = newForeground;
+    background = newBackground;
+    refreshColor();
 }
 
 // ---------------- LOW LEVEL CELL WRITE ----------------

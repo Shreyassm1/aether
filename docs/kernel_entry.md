@@ -57,7 +57,7 @@ Source: [kernel_main.cpp](../kernel/kernel_main.cpp)
 
 Current behavior:
 - Enters as `extern "C" void kernel_main()`.
-- In both builds, initializes and clears the VGA console driver, then writes the boot message and a second status line through `VGA::Console`.
+- In both builds, initializes and clears the VGA console driver, then writes the boot message and one colored status line through `VGA::Console`.
 - In the 64-bit build, first calls `mmu::init()` and `mmu::enable()`, then uses the VGA console driver after runtime paging is active.
 - Halts in an infinite `hlt` loop.
 
@@ -78,17 +78,21 @@ Implemented in module:
   - `row`
   - `col`
   - `color`
+  - `foreground`
+  - `background`
   - `buffer`
 - driver operations:
   - `init()`
   - `clear()`
   - `putChar()`
   - `write()`
+  - `setColor()`
   - internal `scroll()`
 
 Why this matters:
 - The repo no longer writes to VGA only through loose helper functions in `kernel_main`.
 - VGA output is now modeled as an explicit freestanding C++ hardware driver with a static interface and deterministic state.
+- The driver now exposes a simple color API instead of forcing raw attribute-byte literals at call sites.
 
 ## 5. Paging Module in Active Use (`kernel/arch/x86_64/mmu`)
 

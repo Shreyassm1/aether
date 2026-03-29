@@ -7,6 +7,28 @@ Sources:
 - [vga.cpp](../kernel/drivers/vga.cpp)
 - [kernel_main.cpp](../kernel/kernel_main.cpp)
 
+## 0. What VGA Text Attributes Can Actually Do
+
+VGA text mode does support a few character attributes, but they are limited to what one attribute byte can encode.
+
+What we can control now:
+
+- foreground color
+- background color
+
+What we still cannot control in VGA text mode:
+
+- per-character size
+- arbitrary metadata visible on screen
+- true RGB colors
+
+Why:
+
+- each screen cell is only 2 bytes total
+- 1 byte is the character
+- 1 byte is the attribute
+- the hardware decides how to interpret that attribute byte
+
 ## 1. Why the Driver Is a Static C++ Class
 
 The active VGA path is:
@@ -97,7 +119,32 @@ Why not use a struct here:
 - The 16-bit value format is the hardware format directly.
 - The current version is easier to verify against the VGA memory map.
 
-## 4. What `putChar()` Really Does
+## 4. How Foreground and Background Colors Fit into One Attribute Byte
+
+The current driver exposes:
+
+- `setColor(foreground, background)`
+
+Behind the scenes, VGA text mode uses this layout:
+
+```text
+bits 7..4  = background color
+bits 3..0  = foreground color
+```
+
+What that means in practice:
+
+- foreground gets 4 bits, so it can use all 16 VGA colors
+- background gets 4 bits in the current simplified design
+- one driver call just packs those two nibbles into the attribute byte used by VGA text mode
+
+Why the driver was simplified:
+
+- the blink path was not producing reliable visible behavior in QEMU
+- keeping only the observable color path makes the driver easier to trust and easier to learn from
+- the code now demonstrates only the hardware behavior we can verify clearly on screen
+
+## 5. What `putChar()` Really Does
 
 `putChar()` is the policy layer above the raw hardware write.
 
@@ -126,7 +173,7 @@ Why not manipulate the hardware cursor registers yet:
 - hardware cursor programming needs extra port I/O code
 - keeping that out for now keeps the first driver minimal and easier to reason about
 
-## 5. Why `scroll()` Copies Rows Manually
+## 6. Why `scroll()` Copies Rows Manually
 
 When output reaches the bottom of the screen, the driver must preserve earlier lines and make space for a new last line.
 
@@ -148,11 +195,11 @@ Why not use `memmove`:
 - an explicit loop is fully visible and freestanding-safe
 - this keeps the data movement obvious for learning
 
-## 6. Why `init()` and `clear()` Are Separate
+## 7. Why `init()` and `clear()` Are Separate
 
 `init()`:
 
-- resets driver state (`row`, `col`, `color`)
+- resets driver state (`row`, `col`, foreground, background, cached attribute byte)
 
 `clear()`:
 
@@ -161,7 +208,7 @@ Why not use `memmove`:
 
 This separation matters because "driver state reset" and "hardware surface clear" are different operations.
 
-## 7. Why the Old Raw Code Was Kept
+## 8. Why the Old Raw Code Was Kept
 
 The previous direct-write example is still preserved in [kernel_main.cpp](../kernel/kernel_main.cpp) inside `legacy_vga_demo`.
 

@@ -45,9 +45,20 @@ extern "C" void kernel_main() {
 
     VGA::Console::init();
     VGA::Console::clear();
+
+    // ---------------- ACTIVE VGA COLOR DEMO ----------------
+    //
+    // Keep the example simple and visibly reliable in QEMU:
+    // one default line, then one colored line.
+
+    VGA::Console::setColor(VGA::Console::Color::White, VGA::Console::Color::Black);
     VGA::Console::write(AETHER_BOOT_MESSAGE);
     VGA::Console::write("\n");
+
+    VGA::Console::setColor(VGA::Console::Color::LightGreen, VGA::Console::Color::Black);
     VGA::Console::write("VGA driver working\n");
+
+    VGA::Console::setColor(VGA::Console::Color::LightGray, VGA::Console::Color::Black);
 
     // Hang the CPU to keep the message on screen
     while (true) {
