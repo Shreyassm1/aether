@@ -45,3 +45,17 @@ This file contains a concise timeline of repository progress, grouped by date. E
 	- Wired `kernel_main` to call `mmu::init()` and `mmu::enable()` in the 64-bit build so the runtime MMU mapping becomes active after long mode entry.
 - docs: sync repo status with dual-kernel structure
 	- Updated `docs/kernel_entry.md`, `docs/repo_status.md`, and `docs/README.md` to document the new split boot flow and note that the older `boot/linker.ld` / `kernel.elf` path was replaced.
+
+2026-03-29
+- feat: add freestanding C++ VGA console driver
+	- Added `kernel/drivers/vga.hpp` and `kernel/drivers/vga.cpp` implementing a static `VGA::Console` class around the text-mode VGA buffer at `0xB8000`.
+	- The driver now owns screen state (`row`, `col`, `color`) and provides `init()`, `clear()`, `putChar()`, `write()`, and `scroll()` without requiring heap allocation, constructors, exceptions, or the STL.
+	- Updated `kernel/kernel_main.cpp` to use the new driver while keeping the earlier raw-pointer VGA example preserved in a labeled legacy section for learning.
+- build: compile VGA driver into both kernel targets
+	- Updated `Makefile` so both `kernel32.elf` and `kernel64.elf` link the new VGA driver object file.
+- docs: explain VGA text mode driver design
+	- Added `docs/vga_console.md` and refreshed `docs/kernel_entry.md`, `docs/repo_status.md`, and `docs/README.md` to document the hardware mapping, static-class design, and current runtime behavior.
+- feat: expose VGA text colors through a simple driver API
+	- Extended `VGA::Console` with an explicit color API so the driver can encode foreground and background colors without using raw magic numbers at call sites.
+	- Kept the kernel demo to one clearly observable colored status line so the visible behavior stays simple and reliable in QEMU.
+	- Simplified the VGA docs to match the observable color-only path now kept in the driver.

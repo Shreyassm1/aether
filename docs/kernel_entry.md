@@ -57,14 +57,44 @@ Source: [kernel_main.cpp](../kernel/kernel_main.cpp)
 
 Current behavior:
 - Enters as `extern "C" void kernel_main()`.
-- In the 32-bit build, writes `"Aether-OS running 32-bit kernel."` to VGA text memory (`0xB8000`).
-- In the 64-bit build, first calls `mmu::init()` and `mmu::enable()`, then writes `"Aether-OS entered 64-bit long mode."`.
+- In both builds, initializes and clears the VGA console driver, then writes the boot message and one colored status line through `VGA::Console`.
+- In the 64-bit build, first calls `mmu::init()` and `mmu::enable()`, then uses the VGA console driver after runtime paging is active.
 - Halts in an infinite `hlt` loop.
 
 Notes:
-- This stage remains intentionally minimal, but it now acts as the runtime MMU handoff point for the 64-bit kernel.
+- This stage remains intentionally minimal, but it now acts as:
+  - the runtime MMU handoff point for the 64-bit kernel
+  - the integration point for the first real VGA console driver abstraction
 
-## 4. Paging Module in Active Use (`kernel/arch/x86_64/mmu`)
+## 4. VGA Console Driver (`kernel/drivers/vga`)
+
+Sources:
+- [vga.hpp](../kernel/drivers/vga.hpp)
+- [vga.cpp](../kernel/drivers/vga.cpp)
+
+Implemented in module:
+- `namespace VGA { class Console { ... }; }`
+- static driver state:
+  - `row`
+  - `col`
+  - `color`
+  - `foreground`
+  - `background`
+  - `buffer`
+- driver operations:
+  - `init()`
+  - `clear()`
+  - `putChar()`
+  - `write()`
+  - `setColor()`
+  - internal `scroll()`
+
+Why this matters:
+- The repo no longer writes to VGA only through loose helper functions in `kernel_main`.
+- VGA output is now modeled as an explicit freestanding C++ hardware driver with a static interface and deterministic state.
+- The driver now exposes a simple color API instead of forcing raw attribute-byte literals at call sites.
+
+## 5. Paging Module in Active Use (`kernel/arch/x86_64/mmu`)
 
 Sources:
 - [paging.hpp](../kernel/arch/x86_64/mmu/paging.hpp)

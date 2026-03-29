@@ -1,8 +1,4 @@
-/* * We are in a freestanding environment. 
- * We define our own types since we don't have <cstdint> yet.
- */
-typedef unsigned short uint16_t;
-typedef unsigned char uint8_t;
+#include "drivers/vga.hpp"
 
 #if defined(__x86_64__)
 #include "arch/x86_64/mmu/paging.hpp"
@@ -12,7 +8,16 @@ typedef unsigned char uint8_t;
 #define AETHER_BOOT_MESSAGE "Aether-OS Kernel Initialized."
 #endif
 
-static void write_string(uint16_t* vga_buffer, int& cursor, const char* str, uint8_t color) {
+// ---------------- LEGACY LEARNING SNIPPET ----------------
+//
+// This preserves the earlier "raw pointer + loose function" approach for comparison.
+// It is intentionally not used anymore; the active path is the VGA::Console driver below.
+namespace legacy_vga_demo {
+
+using uint16_t = unsigned short;
+using uint8_t = unsigned char;
+
+[[maybe_unused]] static void write_string(uint16_t* vga_buffer, int& cursor, const char* str, uint8_t color) {
     for (int i = 0; str[i] != '\0'; ++i) {
         if (str[i] == '\n') {
             cursor += 80 - (cursor % 80);
@@ -23,11 +28,11 @@ static void write_string(uint16_t* vga_buffer, int& cursor, const char* str, uin
     }
 }
 
-extern "C" void kernel_main() {
-    uint16_t* vga_buffer = reinterpret_cast<uint16_t*>(0xB8000);
-    uint8_t color = 0x0F; // White text on Black background
-    int cursor = 0;
+} // namespace legacy_vga_demo
 
+// ---------------- ACTIVE KERNEL ENTRY ----------------
+
+extern "C" void kernel_main() {
 #if defined(__x86_64__)
     /*
      * We entered long mode using a tiny bootstrap identity map in assembly.
@@ -36,13 +41,24 @@ extern "C" void kernel_main() {
     mmu::init();
     mmu::enable();
 #else
-    /*
-     * Direct hardware access: The VGA Text Buffer
-     * Located at physical address 0xB8000.
-     * Each character is 2 bytes: [Attribute (8bit) | Character (8bit)]
-     */
 #endif
-    write_string(vga_buffer, cursor, AETHER_BOOT_MESSAGE, color);
+
+    VGA::Console::init();
+    VGA::Console::clear();
+
+    // ---------------- ACTIVE VGA COLOR DEMO ----------------
+    //
+    // Keep the example simple and visibly reliable in QEMU:
+    // one default line, then one colored line.
+
+    VGA::Console::setColor(VGA::Console::Color::White, VGA::Console::Color::Black);
+    VGA::Console::write(AETHER_BOOT_MESSAGE);
+    VGA::Console::write("\n");
+
+    VGA::Console::setColor(VGA::Console::Color::LightGreen, VGA::Console::Color::Black);
+    VGA::Console::write("VGA driver working\n");
+
+    VGA::Console::setColor(VGA::Console::Color::LightGray, VGA::Console::Color::Black);
 
     // Hang the CPU to keep the message on screen
     while (true) {

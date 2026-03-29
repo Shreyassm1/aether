@@ -10,7 +10,15 @@
   - [boot/linker64.ld](../boot/linker64.ld)
 - A repo-root [Makefile](../Makefile) that builds both kernel images and the bootable ISO.
 - Freestanding C++ entry function `kernel_main` in [kernel/kernel_main.cpp](../kernel/kernel_main.cpp).
-- Direct VGA text write to physical address `0xB8000`.
+- VGA console driver in:
+  - [vga.hpp](../kernel/drivers/vga.hpp)
+  - [vga.cpp](../kernel/drivers/vga.cpp)
+  - static class design for freestanding C++
+  - direct MMIO write to physical address `0xB8000`
+  - newline handling
+  - screen clearing
+  - text scrolling
+  - foreground/background color control
 - Active x86_64 paging implementation in:
   - [paging.hpp](../kernel/arch/x86_64/mmu/paging.hpp)
   - [paging.cpp](../kernel/arch/x86_64/mmu/paging.cpp)
@@ -50,13 +58,15 @@
 
 - 32-bit kernel:
   - boots through `boot.S`
-  - writes a VGA message
+  - initializes and clears the VGA console
+  - writes status lines through `VGA::Console`
   - halts
 - 64-bit kernel:
   - boots through `boot_long.S`
   - enters long mode using bootstrap paging
   - calls `mmu::init()` and `mmu::enable()`
-  - writes a VGA message
+  - initializes and clears the VGA console
+  - writes status lines through `VGA::Console`
   - halts
 
 ## Gaps / Not Yet Wired
@@ -64,11 +74,13 @@
 - No IDT/interrupt handling yet.
 - No physical memory manager (PMM) or virtual memory manager (VMM) yet.
 - No scheduler/process model yet.
-- No higher-level VGA console abstraction yet.
+- No formatted output layer above the VGA console yet.
+- No hardware cursor programming yet.
+- No software-managed per-cell metadata beyond the VGA hardware attribute byte.
 
 ## Recommended Next Documentation Sync Points
 
 When code changes, update this doc for:
 - Any new boot steps or CPU mode transitions.
 - Memory subsystem evolution beyond identity-mapped bootstrap/runtime paging.
-- VGA console abstraction once raw text-buffer writes are replaced.
+- Formatted output once a `printf`-like layer is added above the VGA console.
